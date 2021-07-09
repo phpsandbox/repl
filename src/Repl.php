@@ -2,7 +2,6 @@
 
 namespace PHPSandbox\Repl;
 
-use Illuminate\Support\Collection;
 use Psy\Configuration;
 use Psy\ExecutionLoopClosure;
 use Psy\Shell;
@@ -10,7 +9,7 @@ use PHPSandbox\Repl\OutputModifiers\OutputModifier;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Tinker
+class Repl
 {
     protected OutputInterface $output;
 
@@ -18,38 +17,16 @@ class Tinker
 
     protected OutputModifier $outputModifier;
 
-    protected ?string $psyConfigFile = null;
-
     protected ?string $classMapRootPath = null;
 
-    public function __construct(OutputModifier $outputModifier)
+    public function __construct(OutputModifier $outputModifier, string $rootPath)
     {
         $this->output = new BufferedOutput;
+        $this->classMapRootPath = $rootPath;
 
         $this->shell = $this->createShell();
 
         $this->outputModifier = $outputModifier;
-    }
-
-    public function setOutput(OutputInterface $output): self
-    {
-        $this->output = $output;
-
-        return $this;
-    }
-
-    public function setClassMapRootPath(string $classMapRootPath): self
-    {
-        $this->classMapRootPath = $classMapRootPath;
-
-        return $this;
-    }
-
-    public function setPsyConfig(string $psyConfigFile = null): self
-    {
-        $this->psyConfigFile = $psyConfigFile;
-
-        return $this;
     }
 
     public function execute(string $phpCode): string
@@ -71,35 +48,31 @@ class Tinker
     {
         $config = new Configuration([
             'updateCheck' => 'never',
-            'configFile' => $this->psyConfigFile ?? null,
+            'configFile' => null
         ]);
 
         $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
 
-        $config->getPresenter()->addCasters([
-            Collection::class => 'Laravel\Tinker\TinkerCaster::castCollection',
-//            Model::class => 'Laravel\Tinker\TinkerCaster::castModel',
-//            Application::class => 'Laravel\Tinker\TinkerCaster::castApplication',
-        ]);
+        $config->getPresenter()->addCasters([]);
 
         $shell = new Shell($config);
 
         $shell->setOutput($this->output);
 
-        $composerClassMap = sprintf('%s/vendor/composer/autoload_classmap.php', $this->classMapRootPath);
-
-        if (file_exists($composerClassMap)) {
-            ClassAliasAutoloader::register($shell, $composerClassMap);
-        }
+//        $composerClassMap = sprintf('%s/vendor/composer/autoload_classmap.php', $this->classMapRootPath);
+//
+//        if (file_exists($composerClassMap)) {
+//            ClassAliasAutoloader::register($shell, $composerClassMap);
+//        }
 
         return $shell;
     }
 
     public function removeComments(string $code): string
     {
-        $tokens = collect(token_get_all("<?php\n".$code.'?>'));
+        $tokens = token_get_all("<?php\n".$code.'?>');
 
-        return $tokens->reduce(function ($carry, $token) {
+        return array_reduce($tokens, function ($carry, $token) {
             if (is_string($token)) {
                 return $carry.$token;
             }

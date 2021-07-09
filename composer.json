@@ -5,11 +5,10 @@
     "authors": [
         {
             "name": "Olatunbosun Egberinde",
-            "email": "bosun.egberinde@shopify.com"
+            "email": "bosun@phpsandbox.io"
         }
     ],
     "require": {
-        "illuminate/support": "^8.0",
         "psy/psysh": "^0.10.4"
     },
     "autoload": {
