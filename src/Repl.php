@@ -15,7 +15,10 @@ class Repl
 
     protected Shell $shell;
 
-    protected OutputModifier $outputModifier;
+    /**
+     * @var array<OutputModifier>
+     */
+    protected array $outputModifiers;
 
     protected ?string $classMapRootPath = null;
 
@@ -23,16 +26,15 @@ class Repl
 
     private array $commands = [];
 
-    public function __construct(OutputModifier $outputModifier, string $rootPath, array $casters = [], array $commands = [])
+    public function __construct(string $rootPath, array $outputModifiers = [], array $casters = [], array $commands = [])
     {
         $this->output = new BufferedOutput;
         $this->classMapRootPath = $rootPath;
         $this->casters = $casters;
         $this->commands = $commands;
+        $this->outputModifiers = $outputModifiers;
 
         $this->shell = $this->createShell();
-
-        $this->outputModifier = $outputModifier;
     }
 
     public function execute(string $phpCode): string
@@ -47,7 +49,11 @@ class Repl
 
         $output = $this->cleanOutput($this->output->fetch());
 
-        return $this->outputModifier->modify($output);
+        foreach ($this->outputModifiers as $modifier) {
+            $output = $modifier->modify($output);
+        }
+
+        return $output;
     }
 
     protected function createShell(): Shell
