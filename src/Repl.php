@@ -23,10 +23,12 @@ class Repl
 
     private array $commands = [];
 
-    public function __construct(OutputModifier $outputModifier, string $rootPath)
+    public function __construct(OutputModifier $outputModifier, string $rootPath, array $casters = [], array $commands = [])
     {
         $this->output = new BufferedOutput;
         $this->classMapRootPath = $rootPath;
+        $this->casters = $casters;
+        $this->commands = $commands;
 
         $this->shell = $this->createShell();
 
