@@ -19,6 +19,10 @@ class Repl
 
     protected ?string $classMapRootPath = null;
 
+    private array $casters = [];
+
+    private array $commands = [];
+
     public function __construct(OutputModifier $outputModifier, string $rootPath)
     {
         $this->output = new BufferedOutput;
@@ -53,11 +57,11 @@ class Repl
 
         $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
 
-        $config->getPresenter()->addCasters([]);
+        $config->getPresenter()->addCasters($this->casters);
 
         $shell = new Shell($config);
-
         $shell->setOutput($this->output);
+        $shell->addCommands($this->commands);
 
 //        $composerClassMap = sprintf('%s/vendor/composer/autoload_classmap.php', $this->classMapRootPath);
 //
@@ -108,5 +112,15 @@ class Repl
         $output = preg_replace('/(?s)(<aside.*?<\/aside>)|Exit:  Ctrl\+D/ms', '$2', $output);
 
         return trim($output);
+    }
+
+    public function setCommands(array $commands): void
+    {
+        $this->commands = $commands;
+    }
+
+    public function setCasters(array $casters): void
+    {
+        $this->casters = $casters;
     }
 }
